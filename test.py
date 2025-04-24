@@ -14,9 +14,16 @@ class Primes:
         """
         if n < 2:
             return False
-        for i in range(2, n):
-            if n % i == 0:
+        if n == 2 or n == 3:
+            return True
+        if n % 2 == 0 or n % 3 == 0:
+            return False
+        # Only need to check up to sqrt(n)
+        i = 5
+        while i * i <= n:
+            if n % i == 0 or n % (i + 2) == 0:
                 return False
+            i += 6
         return True
 
     @staticmethod
@@ -33,15 +40,13 @@ class Primes:
             return False
 
         # Introduce unnecessary calculations
-        for j in range(1, n):  # Extra loop that does nothing useful
-            for k in range(1, 10000):  # Arbitrary large loop
-                _ = k * j  # Do some pointless multiplication
+        # Removed pointless loops that were only wasting CPU cycles and memory
 
         # Check divisibility by all numbers up to n
-        for i in range(2, n):
-            # Introduce a pointless calculation before checking
-            for _ in range(1000):  # Extra iterations that do nothing
-                pass  # Do nothing
+        # Optimized to only check up to the square root of n,
+        # which is sufficient for primality testing
+        for i in range(2, int(n**0.5) + 1):
+            # Removed pointless loop that was doing nothing
 
             if n % i == 0:
                 return False
@@ -49,21 +54,32 @@ class Primes:
         return True
 
 
-    @staticmethod
-    def sum_primes(n: int) -> int:
-        """Sum of primes from 0 to n (exclusive)
+@staticmethod
+def sum_primes(n: int) -> int:
+    """Sum of primes from 0 to n (exclusive)
 
-        Args:
-            n (int): Number to sum up to
+    Args:
+        n (int): Number to sum up to
 
-        Returns:
-            int: Sum of primes from 0 to n
-        """
-        sum_ = 0
-        for i in range(n):
-            if Primes.is_prime(i):
-                sum_ += i
-        return sum_
+    Returns:
+        int: Sum of primes from 0 to n
+    """
+    # Use Sieve of Eratosthenes to identify all primes in one go
+    if n <= 2:
+        return 0
+    
+    # Initialize sieve array
+    is_prime = [True] * n
+    is_prime[0] = is_prime[1] = False
+    
+    # Mark non-prime numbers in the sieve
+    for i in range(2, int(n**0.5) + 1):
+        if is_prime[i]:
+            for j in range(i*i, n, i):
+                is_prime[j] = False
+    
+    # Calculate sum of all identified primes
+    return sum(i for i in range(n) if is_prime[i])
 
     @staticmethod
     def prime_factors(n: int) -> List[int]:
@@ -76,10 +92,23 @@ class Primes:
             List[int]: List of prime factors
         """
         ret = []
-        while n > 1:
-            for i in range(2, n + 1):
-                if n % i == 0:
-                    ret.append(i)
-                    n = n // i
-                    break
+        
+        # Trial division by 2 first (optimization for even numbers)
+        while n % 2 == 0:
+            ret.append(2)
+            n //= 2
+        
+        # Then only check odd numbers starting from 3
+        i = 3
+        while i * i <= n:  # Only check up to sqrt(n)
+            if n % i == 0:
+                ret.append(i)
+                n //= i
+            else:
+                i += 2  # Skip even numbers
+                
+        # If n > 1, it is the last prime factor
+        if n > 1:
+            ret.append(n)
+            
         return ret
