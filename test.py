@@ -14,9 +14,16 @@ class Primes:
         """
         if n < 2:
             return False
-        for i in range(2, n):
-            if n % i == 0:
+        if n == 2 or n == 3:
+            return True
+        if n % 2 == 0 or n % 3 == 0:
+            return False
+        # Only check divisors of form 6k±1 up to sqrt(n)
+        i = 5
+        while i * i <= n:
+            if n % i == 0 or n % (i + 2) == 0:
                 return False
+            i += 6
         return True
 
     @staticmethod
@@ -59,11 +66,24 @@ class Primes:
         Returns:
             int: Sum of primes from 0 to n
         """
-        sum_ = 0
-        for i in range(n):
-            if Primes.is_prime(i):
-                sum_ += i
-        return sum_
+        # For small n, just use the direct approach
+        if n < 1000:
+            sum_ = 0
+            for i in range(n):
+                if Primes.is_prime(i):
+                    sum_ += i
+            return sum_
+        
+        # For larger n, use the Sieve of Eratosthenes
+        sieve = [True] * n
+        sieve[0] = sieve[1] = False
+        
+        for i in range(2, int(n**0.5) + 1):
+            if sieve[i]:
+                for j in range(i*i, n, i):
+                    sieve[j] = False
+                    
+        return sum(i for i, is_prime in enumerate(sieve) if is_prime)
 
     @staticmethod
     def prime_factors(n: int) -> List[int]:
@@ -76,10 +96,21 @@ class Primes:
             List[int]: List of prime factors
         """
         ret = []
-        while n > 1:
-            for i in range(2, n + 1):
-                if n % i == 0:
-                    ret.append(i)
-                    n = n // i
-                    break
+        # Check for factors of 2 first
+        while n % 2 == 0:
+            ret.append(2)
+            n //= 2
+            
+        # Check for odd factors starting from 3
+        i = 3
+        while i * i <= n:
+            while n % i == 0:
+                ret.append(i)
+                n //= i
+            i += 2
+            
+        # If n is a prime number greater than 2
+        if n > 1:
+            ret.append(n)
+            
         return ret
